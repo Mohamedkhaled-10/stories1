@@ -1,53 +1,23 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
-const path = require('path');
 
 const app = express();
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// إعداد ناقل البريد الإلكتروني مرة واحدة
-let transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
-  }
-});
-
-// رصد الدخول على الصفحة الرئيسية
-app.get('/', (req, res) => {
-  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
-  if (ip && ip.includes(',')) {
-    ip = ip.split(',')[0].trim();  // أول IP حقيقي في القائمة
-  }
-  const userAgent = req.headers['user-agent'];
-
-  console.log("Visitor IP:", ip);
-  console.log("User Agent:", userAgent);
-
-  let mailOptions = {
-    from: process.env.GMAIL_USER,
-    to: process.env.GMAIL_USER,
-    subject: 'دخول زائر جديد للموقع',
-    text: `تم دخول زائر على الموقع\n\nIP: ${ip}\nUser-Agent: ${userAgent}`
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending visitor email:', error);
-    } else {
-      console.log('Visitor email sent:', info.response);
-    }
-  });
-
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// استقبال رفع الصورة وإرسالها بالإيميل
 app.post('/upload', async (req, res) => {
   const image = req.body.image;
 
+  // إعداد ناقل البريد الإلكتروني باستخدام متغيرات البيئة
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,       // استبدل بالقيمة من متغيرات البيئة
+      pass: process.env.GMAIL_PASS        // استبدل بالقيمة من متغيرات البيئة
+    }
+  });
+
+  // إعداد رسالة البريد
   let mailOptions = {
     from: process.env.GMAIL_USER,
     to: process.env.GMAIL_USER,
@@ -69,11 +39,11 @@ app.post('/upload', async (req, res) => {
   }
 });
 
-// خدمة الملفات الثابتة (CSS، JS، صور، إلخ)
+// خدمة الملفات الثابتة (index.html وغيره)
 app.use(express.static(__dirname));
 
 // تشغيل السيرفر على البورت المحدد من البيئة أو 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(Server running on port ${PORT});
 });
