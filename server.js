@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// إعداد ناقل البريد الإلكتروني مرة وحدة فقط
+// إعداد ناقل البريد الإلكتروني مرة واحدة
 let transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -17,8 +17,14 @@ let transporter = nodemailer.createTransport({
 
 // رصد الدخول على الصفحة الرئيسية
 app.get('/', (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+  if (ip && ip.includes(',')) {
+    ip = ip.split(',')[0].trim();  // أول IP حقيقي في القائمة
+  }
   const userAgent = req.headers['user-agent'];
+
+  console.log("Visitor IP:", ip);
+  console.log("User Agent:", userAgent);
 
   let mailOptions = {
     from: process.env.GMAIL_USER,
