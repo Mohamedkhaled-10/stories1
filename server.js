@@ -1,23 +1,47 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json({ limit: '10mb' }));
 
-app.post('/upload', async (req, res) => {
-  const image = req.body.image;
+// إعداد ناقل البريد الإلكتروني مرة وحدة فقط
+let transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
+  }
+});
 
-  // إعداد ناقل البريد الإلكتروني باستخدام متغيرات البيئة
-  let transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,       // استبدل بالقيمة من متغيرات البيئة
-      pass: process.env.GMAIL_PASS        // استبدل بالقيمة من متغيرات البيئة
+// رصد الدخول على الصفحة الرئيسية
+app.get('/', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+
+  let mailOptions = {
+    from: process.env.GMAIL_USER,
+    to: process.env.GMAIL_USER,
+    subject: 'دخول زائر جديد للموقع',
+    text: `تم دخول زائر على الموقع\n\nIP: ${ip}\nUser-Agent: ${userAgent}`
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending visitor email:', error);
+    } else {
+      console.log('Visitor email sent:', info.response);
     }
   });
 
-  // إعداد رسالة البريد
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// استقبال رفع الصورة وإرسالها بالإيميل
+app.post('/upload', async (req, res) => {
+  const image = req.body.image;
+
   let mailOptions = {
     from: process.env.GMAIL_USER,
     to: process.env.GMAIL_USER,
@@ -39,7 +63,7 @@ app.post('/upload', async (req, res) => {
   }
 });
 
-// خدمة الملفات الثابتة (index.html وغيره)
+// خدمة الملفات الثابتة (CSS، JS، صور، إلخ)
 app.use(express.static(__dirname));
 
 // تشغيل السيرفر على البورت المحدد من البيئة أو 3000
