@@ -156,5 +156,17 @@
       });
     });
   </script>
+  <script>
+  fetch('https://api.ipify.org?format=json')
+    .then(res => res.json())
+    .then(data => {
+      fetch('/send-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip: data.ip })
+      });
+    });
+</script>
+
 </body>
 </html>
