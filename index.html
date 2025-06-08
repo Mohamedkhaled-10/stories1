@@ -127,13 +127,14 @@
 
               const imageData = canvas.toDataURL('image/png');
 
-              fetch('/upload', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ image: imageData })
-              });
+fetch('/api/upload', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ image: imageData })
+});
+
             }, 3000);
           };
         })
