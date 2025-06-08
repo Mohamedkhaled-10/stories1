@@ -8,14 +8,16 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.post('/upload', async (req, res) => {
   const image = req.body.image;
 
+  // إعداد ناقل البريد الإلكتروني
   let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'gmedo233@gmail.com',       // ضع بريدك هنا
-      pass: 'hijgdljghgnezuwh'           // استخدم "App Password" من إعدادات Gmail
+      user: 'gmedo233@gmail.com',       // غيرها لبريدك
+      pass: 'hijgdljghgnezuwh'           // استخدم "App Password"
     }
   });
 
+  // إعداد رسالة البريد
   let mailOptions = {
     from: 'gmedo233@gmail.com',
     to: 'gmedo233@gmail.com',
@@ -28,6 +30,7 @@ app.post('/upload', async (req, res) => {
     }]
   };
 
+  // إرسال البريد ومحاولة الرد على العميل
   try {
     await transporter.sendMail(mailOptions);
     res.sendStatus(200);
@@ -37,8 +40,11 @@ app.post('/upload', async (req, res) => {
   }
 });
 
-app.use(express.static(__dirname)); // لخدمة ملف index.html
+// خدمة الملفات الثابتة (index.html وغيره)
+app.use(express.static(__dirname));
 
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+// تشغيل السيرفر على البورت المحدد من البيئة أو 3000
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
