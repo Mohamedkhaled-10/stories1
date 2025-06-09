@@ -1,49 +1,42 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json({ limit: '10mb' }));
-
-app.post('/upload', async (req, res) => {
-  const image = req.body.image;
-
-  // إعداد ناقل البريد الإلكتروني باستخدام متغيرات البيئة
-  let transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,       // استبدل بالقيمة من متغيرات البيئة
-      pass: process.env.GMAIL_PASS        // استبدل بالقيمة من متغيرات البيئة
-    }
-  });
-
-  // إعداد رسالة البريد
-  let mailOptions = {
-    from: process.env.GMAIL_USER,
-    to: process.env.GMAIL_USER,
-    subject: 'New Photo Captured',
-    html: '<p>Attached image from site.</p>',
-    attachments: [{
-      filename: 'photo.png',
-      content: image.split("base64,")[1],
-      encoding: 'base64'
-    }]
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    res.sendStatus(200);
-  } catch (error) {
-    console.error('Email error:', error);
-    res.sendStatus(500);
-  }
-});
-
-// خدمة الملفات الثابتة (index.html وغيره)
 app.use(express.static(__dirname));
 
-// تشغيل السيرفر على البورت المحدد من البيئة أو 3000
+// تأكد إن مجلد uploads موجود، ولو مش موجود نعمله
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+app.post('/api/upload', async (req, res) => {
+  const imageData = req.body.image;
+
+  // إنشاء اسم عشوائي للصورة باستخدام التاريخ والزمن
+  const fileName = `photo_${Date.now()}.jpg`;
+  const filePath = path.join(uploadDir, fileName);
+
+  // استخراج البيانات بعد base64
+  const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  // حفظ الصورة
+  fs.writeFile(filePath, buffer, (err) => {
+    if (err) {
+      console.error('Error saving image:', err);
+      return res.sendStatus(500);
+    }
+    console.log('Image saved:', fileName);
+    res.sendStatus(200);
+  });
+});
+
+// تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(Server running on port ${PORT});
+  console.log(`Server running on port ${PORT}`);
 });
