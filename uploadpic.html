@@ -1,0 +1,53 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>ارفع صورتك</title>
+  <style>
+    body { font-family: Arial; direction: rtl; text-align: center; padding: 50px; }
+    input, button { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>قم برفع صورتك</h2>
+
+  <input type="file" id="imageInput" accept="image/*" />
+  <br>
+  <button onclick="uploadImage()">إرسال</button>
+
+  <script>
+    function uploadImage() {
+      const fileInput = document.getElementById('imageInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("من فضلك اختر صورة أولاً");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = function () {
+        const base64Image = reader.result;
+
+        fetch('/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ image: base64Image })
+        })
+        .then(res => {
+          if (res.ok) {
+            alert("تم إرسال الصورة بنجاح!");
+          } else {
+            alert("حدث خطأ أثناء إرسال الصورة.");
+          }
+        });
+      };
+
+      reader.readAsDataURL(file); // يحول الصورة لـ base64
+    }
+  </script>
+</body>
+</html>
